@@ -29,7 +29,8 @@ Import the metadata available in the file `'books_meta.txt'` (note it is `'\t'` 
 
 
 ```python
-# Your code here
+meta = pd.read_csv('books_meta.txt', sep='\t')
+meta.head()
 ```
 
 ## Select Books to Test Your Recommender On
@@ -38,7 +39,10 @@ Select a small subset of books that you are interested in generating recommendat
 
 
 ```python
-# Your code here
+# Lets rexamine our fascination with Game of Thrones
+GOT = meta[meta.Title.str.contains('Thrones')]
+GOT
+
 ```
 
 ## Generate Recommendations for a Few Books of Choice
@@ -47,7 +51,29 @@ The `'books_data.edgelist'` has conveniently already calculated the distance bet
 
 
 ```python
-# Your code here
+# Well, got a couple or extraneous results in there, but perhaps good measure for comparion.
+# What does our recommender return for these books?
+rec_dict = {}
+id_name_dict = dict(zip(meta.ASIN, meta.Title))
+for row in GOT.index:
+    book_id = GOT.ASIN[row]
+    book_name = id_name_dict[book_id]
+    most_similar = df[(df.source == book_id)
+                      | (df.target == book_id)
+                     ].sort_values(by='weight', ascending=False).head(10)
+    most_similar['source_name'] = most_similar['source'].map(id_name_dict)
+    most_similar['target_name'] = most_similar['target'].map(id_name_dict)
+    recommendations = []
+    for row in most_similar.index:
+        if most_similar.source[row] == book_id:
+            recommendations.append((most_similar.target_name[row], most_similar.weight[row]))
+        else:
+            recommendations.append((most_similar.source_name[row], most_similar.weight[row]))
+    rec_dict[book_name] = recommendations
+    print('Recommendations for:', book_name)
+    for r in recommendations:
+        print(r)
+    print('\n\n')
 ```
 
 ## Summary
